@@ -1,0 +1,79 @@
+import machine
+import random
+
+N = 256  # número de "personas/estados"
+
+# 0 = en contra, 1 = a favor, 2 = dudando
+states = [2 for _ in range(N)]
+
+# UART0 en cada worker (GP0/GP1)
+uart = machine.UART(
+    0,
+    baudrate=115200,
+    tx=machine.Pin(0),   # GP0 TX
+    rx=machine.Pin(1)    # GP1 RX
+)
+
+# LED interno de la Pico W
+led = machine.Pin("LED", machine.Pin.OUT)
+
+def step_states():
+    """Evolución probabilística de todos los estados."""
+    global states
+    for i in range(N):
+        s = states[i]
+        r = random.random()
+
+        if s == 2:  # dudando
+            if r < 0.15:
+                states[i] = 1
+            elif r < 0.25:
+                states[i] = 0
+
+        elif s == 1:  # a favor
+            if r < 0.05:
+                states[i] = 2
+            elif r < 0.07:
+                states[i] = 0
+
+        elif s == 0:  # en contra
+            if r < 0.05:
+                states[i] = 2
+            elif r < 0.06:
+                states[i] = 1
+
+        # Ruido raro: cambio aleatorio muy poco frecuente
+        if random.random() < 0.005:
+            states[i] = random.randint(0, 2)
+
+def measure():
+    """Cuenta cuántos estados hay en 0, 1 y 2."""
+    contra = 0
+    favor = 0
+    duda = 0
+    for s in states:
+        if s == 0:
+            contra += 1
+        elif s == 1:
+            favor += 1
+        else:
+            duda += 1
+    return favor, contra, duda
+
+while True:
+    if uart.any():
+        cmd = uart.readline()
+        if not cmd:
+            continue
+
+        try:
+            cmd = cmd.decode().strip()
+        except:
+            continue
+
+        if cmd == "STEP":
+            led.on()
+            step_states()
+            f, c, d = measure()
+            led.off()
+            uart.write(f"{f},{c},{d}\n")

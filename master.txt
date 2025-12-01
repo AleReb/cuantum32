@@ -1,0 +1,91 @@
+import machine
+import utime
+
+# UART hacia Worker A (usa UART0 en el maestro, GP0/GP1)
+uart_a = machine.UART(
+    0,
+    baudrate=115200,
+    tx=machine.Pin(0),   # GP0 TX
+    rx=machine.Pin(1)    # GP1 RX
+)
+
+# UART hacia Worker B (usa UART1 en el maestro, GP4/GP5)
+uart_b = machine.UART(
+    1,
+    baudrate=115200,
+    tx=machine.Pin(4),   # GP4 TX
+    rx=machine.Pin(5)    # GP5 RX
+)
+
+# Debe coincidir con N en los workers
+N_POR_WORKER = 256
+N_TOTAL = N_POR_WORKER * 2   # 2 workers
+
+def enviar_step(uart):
+    """Envía el comando STEP a un worker."""
+    uart.write(b"STEP\n")
+
+def leer_respuesta(uart, timeout_ms=2000):
+    """
+    Lee una línea del worker con timeout.
+    Espera algo del tipo: 'favor,contra,duda\\n'
+    """
+    inicio = utime.ticks_ms()
+    linea = b""
+
+    while utime.ticks_diff(utime.ticks_ms(), inicio) < timeout_ms:
+        if uart.any():
+            c = uart.read(1)
+            if c == b"\n":
+                break
+            linea += c
+
+    if not linea:
+        return None
+
+    try:
+        texto = linea.decode().strip()
+        a_favor, en_contra, neutros = map(int, texto.split(","))
+        return a_favor, en_contra, neutros
+    except Exception as e:
+        print("Error parseando respuesta:", e, linea)
+        return None
+
+while True:
+    # 1) Pedir un paso a ambos workers
+    enviar_step(uart_a)
+    enviar_step(uart_b)
+
+    # 2) Leer respuestas
+    res_a = leer_respuesta(uart_a)
+    res_b = leer_respuesta(uart_b)
+
+    if res_a is None or res_b is None:
+        print("Error o timeout en alguna respuesta")
+        utime.sleep(1.5)
+        continue
+
+    a_favor_a, en_contra_a, neutros_a = res_a
+    a_favor_b, en_contra_b, neutros_b = res_b
+
+    # 3) Sumar los resultados
+    favor_total  = a_favor_a  + a_favor_b
+    contra_total = en_contra_a + en_contra_b
+    neutro_total = neutros_a  + neutros_b
+
+    total = favor_total + contra_total + neutro_total
+    if total == 0:
+        utime.sleep(1.5)
+        continue
+
+    p_favor  = favor_total  / total
+    p_contra = contra_total / total
+    p_neutro = neutro_total / total
+
+    print("======== CLUSTER ========")
+    print("A favor  :", round(p_favor * 100, 1), "%")
+    print("En contra:", round(p_contra * 100, 1), "%")
+    print("Dudando  :", round(p_neutro * 100, 1), "%")
+    print("==========================\n")
+
+    utime.sleep(1.5)
