@@ -5,17 +5,20 @@ Sistema distribuido basado en Arduino que utiliza comunicación I2C para coordin
 ## 📋 Descripción
 
 Este proyecto implementa una arquitectura maestro-esclavo donde:
-- **1 Maestro (Master)**: Coordina la comunicación I2C, agrega resultados, y muestra datos en pantalla OLED con timestamps del RTC DS3231
-- **4+ Esclavos (Slaves)**: Procesan datos de opiniones y responden a solicitudes del maestro
+- **1 Maestro (Master)**: Coordina la comunicación I2C, agrega resultados, monitorea el ambiente (Temp/Hum), registra datos en SD y muestra información en pantalla OLED con timestamps del RTC DS3231.
+- **4+ Esclavos (Slaves)**: Procesan datos de opiniones y responden a solicitudes del maestro.
 
 El sistema está diseñado para ser escalable, permitiendo agregar más esclavos según sea necesario.
 
 ## 🔧 Hardware Requerido
 
 ### Maestro (Master)
-- 1x Arduino (Uno, Mega, Nano, ESP32, etc.)
+- 1x ESP32-S3 Super Mini (o compatible)
 - 1x Pantalla OLED 1.3" (SH1106, dirección I2C 0x3C)
 - 1x Módulo RTC DS3231 (dirección I2C 0x68)
+- 1x Sensor BME280 (Temp/Hum/Pres, dirección I2C 0x76)
+- 1x Módulo MicroSD (SPI: CS=7, MOSI=6, MISO=5, SCLK=4)
+- 1x LED RGB (NeoPixel/WS2812B en pin 48)
 - Resistencias pull-up 4.7kΩ (2x para SDA y SCL)
 
 ### Cada Esclavo (Slave)
@@ -27,12 +30,9 @@ El sistema está diseñado para ser escalable, permitiendo agregar más esclavos
 - Fuente de alimentación adecuada (si se usan múltiples dispositivos)
 - Protoboard o PCB para conexiones
 
-cd cuantum32
-```
-
 ### 2. Configurar el Maestro
 1. Abrir `master.ino` en Arduino IDE
-2. Revisar `config.h` para ajustar configuraciones si es necesario
+2. Revisar `config.h` para ajustar configuraciones si es necesario (pines, direcciones, habilitar/deshabilitar módulos)
 3. Conectar el Arduino maestro
 4. Seleccionar placa y puerto correcto
 5. Cargar el código
@@ -74,17 +74,20 @@ Ver [WIRING.md](WIRING.md) para diagramas detallados de conexión.
 2. Programar nuevos esclavos con direcciones únicas
 3. Conectar al bus I2C
 
-### Deshabilitar OLED o RTC
-En `config.h`:
+### Habilitar/Deshabilitar Módulos
+En `config.h` puedes activar o desactivar componentes:
 ```cpp
-#define ENABLE_OLED false  // Deshabilitar pantalla OLED
-#define ENABLE_RTC false   // Deshabilitar RTC
+#define ENABLE_OLED       true   // Pantalla OLED
+#define ENABLE_RTC        true   // Reloj RTC
+#define ENABLE_SD_LOGGING true   // Registro en SD
+#define ENABLE_BME280     true   // Sensor ambiental
+#define ENABLE_RGB_LED    true   // LED de estado
 ```
 
 ### Ajustar Velocidad I2C
 En `config.h`:
 ```cpp
-#define I2C_CLOCK_SPEED 400000  // 400 kHz (modo rápido)
+#define I2C_CLOCK_SPEED 100000  // 100 kHz (estándar) o 400000 (rápido)
 ```
 
 ## 📊 Uso
@@ -93,18 +96,30 @@ En `config.h`:
 Abrir el monitor serial (115200 baud) para ver:
 - Escaneo de dispositivos I2C al inicio
 - Resultados agregados en tiempo real
+- Confirmación de escritura en SD (`>> Data saved to SD`)
 - Mensajes de error o advertencias
 
 ### Pantalla OLED
 La pantalla muestra:
 - Título del sistema
-- Timestamp actual (si RTC está habilitado)
-- Porcentajes de opiniones:
-  - A favor
-  - En contra
-  - Dudando (neutral)
+- Timestamp actual
+- Estado de conexión de esclavos (OK/X)
+- Porcentajes de opiniones (Fav, Con, Neu)
+- Datos ambientales (Temp, Hum)
 
-### Ejemplo de Salida
+### Registro en Tarjeta SD
+El sistema crea/abre el archivo `datalog.csv` y registra una línea por ciclo con el formato:
+`Timestamp,Favor,Contra,Neutral,Total,Temp,Humidity`
+
+### Indicador LED RGB
+El LED RGB indica el estado del sistema:
+- **Azul**: En espera (Idle)
+- **Amarillo**: Leyendo datos de esclavos
+- **Verde**: Lectura exitosa (todos los esclavos respondieron)
+- **Naranja**: Advertencia (algunos esclavos fallaron)
+- **Rojo**: Error (ningún esclavo respondió)
+
+### Ejemplo de Salida Serial
 ```
 ======== CLUSTER ========
 Time: 11:15:32
@@ -112,6 +127,7 @@ A favor  : 42.3 %
 En contra: 34.8 %
 Dudando  : 22.9 %
 ==========================
+>> Data saved to SD
 ```
 
 ## 🔍 Solución de Problemas
@@ -133,17 +149,16 @@ Dudando  : 22.9 %
 - Revisar que el código del esclavo se cargó correctamente
 - Verificar timeout en `config.h` (aumentar si es necesario)
 
-### RTC muestra hora incorrecta
-- El RTC se ajusta automáticamente a la hora de compilación en el primer arranque
-- Hasta 3 reintentos automáticos
-- Registro de errores en monitor serial
+### Error en SD Card
+- Verificar conexiones SPI (CS, MOSI, MISO, SCLK)
+- Asegurar que la tarjeta está formateada en FAT32
+- Revisar si el archivo `datalog.csv` está abierto en otro lugar
 
 ## 🛠️ Desarrollo Futuro
 
 Posibles mejoras:
 - [ ] Implementar checksums para validación de datos
 - [ ] Agregar comandos de configuración desde el maestro
-- [ ] Almacenamiento de datos en SD card
 - [ ] Interfaz web para visualización remota
 - [ ] Modo de bajo consumo para operación con batería
 
