@@ -67,6 +67,13 @@ const uint8_t SLAVE_ADDRESSES[] = {
 #define UPDATE_INTERVAL_MS  1500  // Delay between polling cycles (milliseconds)
 #define SERIAL_BAUD_RATE    115200
 
+
+// ============================================================================
+// Buttons config
+// ============================================================================
+
+#define BTNA       1    // just extra UX
+#define BTNB       2    // just extra UX
 // ============================================================================
 // DATA PROTOCOL
 // ============================================================================

@@ -164,6 +164,8 @@ void setup() {
   scanI2CBus();
   Serial.println(F("Setup complete. Starting main loop...\n"));
   delay(1000);
+  pinMode(BTNA, INPUT_PULLUP);
+  pinMode(BTNB, INPUT_PULLUP);
 }
 
 
@@ -172,6 +174,12 @@ void setup() {
 // ============================================================================
 
 void loop() {
+  int botnA = digitalRead(BTNA);
+  int botnB = digitalRead(BTNB);
+  if (botnA == 0) Serial.println("Boton A apertado");
+  if (botnB == 0) Serial.println("Boton B apertado");
+  Serial.println(botnA);
+  Serial.println(botnB);
   // Set LED to reading state
   rgbLed.setPixelColor(0, RGB_COLOR_READING);
   rgbLed.show();
