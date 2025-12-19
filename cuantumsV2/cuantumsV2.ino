@@ -20,7 +20,7 @@
 // ============================================================================
 // CONFIG — CHANGE PER SLAVE
 // ============================================================================
-#define SLAVE_ADDRESS 0x13   // change to 0x11, 0x12, 0x13
+#define SLAVE_ADDRESS 0x11   // change to 0x11, 0x12, 0x13
 
 // Optional LED indicator
 static constexpr int LED_PIN = 7;

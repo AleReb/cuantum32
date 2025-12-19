@@ -154,6 +154,7 @@ Posibles mejoras:
 - [ ] Agregar comandos de configuración desde el maestro
 - [ ] Interfaz web para visualización remota
 - [ ] Modo de bajo consumo para operación con batería
+- [*] Implementar cuantum life! revisa la carpeta cuantum_life para ver el código del juego de la vida. 
 
 ## 👤 Autor
 
