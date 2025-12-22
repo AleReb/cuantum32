@@ -1,5 +1,12 @@
 # Sistema de Análisis de Opiniones Distribuido I2C
 
+## Changelog / Recent Updates (Quantum32 V3)
+- **2025-12-22**:
+  - **Fixed Blocking**: Master V3 now updates the OLED display continuously, even during high-speed Python batched sampling.
+  - **Fixed Slave LED**: Slaves now explicitly use **Pin 7** for the status LED and give visual feedback on every I2C RX/TX event.
+  - **Environment**: Fixed local Python environment initialization.
+
+
 Sistema distribuido basado en Arduino que utiliza comunicación I2C para coordinar múltiples dispositivos esclavos que realizan análisis de opiniones (a favor/en contra/neutral). El maestro agrega los resultados y los muestra en una pantalla OLED con marcas de tiempo del RTC.
 
 ## 📋 Descripción
