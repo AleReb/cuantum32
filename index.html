@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum32 Hybrid Sampler - Web Portal</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Controls -->
+        <aside class="sidebar">
+            <div class="brand">
+                <i class="fas fa-microchip pulse-icon"></i>
+                <span>QUANTUM32 PORTAL</span>
+            </div>
+            
+            <div class="control-section">
+                <h3><i class="fas fa-plug"></i> CONEXIÓN</h3>
+                <div class="input-group">
+                    <button id="btnConnect" class="btn btn-primary"><i class="fas fa-link"></i> CONECTAR SERIAL</button>
+                    <div id="statusIndicator" class="status-badge status-disconnected">DESCONECTADO</div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3><i class="fas fa-sliders-h"></i> PARÁMETROS HW</h3>
+                <div class="input-grid">
+                    <div class="field">
+                        <label>Ruido (T)</label>
+                        <input type="number" id="paramT" value="0.20" step="0.01" min="0" max="1">
+                    </div>
+                    <div class="field">
+                        <label>Bias (B)</label>
+                        <input type="number" id="paramB" value="5" step="1">
+                    </div>
+                    <div class="field">
+                        <label>Kp</label>
+                        <input type="number" id="paramKp" value="60" step="1">
+                    </div>
+                    <div class="field">
+                        <label>Modo (M)</label>
+                        <input type="number" id="paramM" value="1" step="1" min="1" max="4">
+                    </div>
+                </div>
+                <div class="field checkbox-field">
+                    <input type="checkbox" id="annealActive">
+                    <label for="annealActive">Simulated Annealing</label>
+                </div>
+                <div class="anneal-params" id="annealSection" style="display: none;">
+                    <div class="input-grid">
+                        <div class="field">
+                            <label>T Ini</label>
+                            <input type="number" id="annealTStart" value="0.35" step="0.01">
+                        </div>
+                        <div class="field">
+                            <label>T Fin</label>
+                            <input type="number" id="annealTEnd" value="0.05" step="0.01">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-section">
+                <h3><i class="fas fa-vial"></i> EXPERIMENTO</h3>
+                <div class="field">
+                    <label>Muestras (K)</label>
+                    <input type="number" id="paramK" value="300" step="10">
+                </div>
+                <div class="actions">
+                    <button id="btnStart" class="btn btn-success" disabled><i class="fas fa-play"></i> INICIAR BATCH</button>
+                    <button id="btnStop" class="btn btn-danger" disabled><i class="fas fa-stop"></i> PARAR</button>
+                </div>
+                <div class="actions secondary-actions">
+                    <button id="btnClear" class="btn btn-secondary"><i class="fas fa-trash"></i> LIMPIAR</button>
+                    <button id="btnSave" class="btn btn-secondary"><i class="fas fa-download"></i> EXPORTAR CSV</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard -->
+        <main class="dashboard">
+            <header class="dashboard-header">
+                <div class="metric-card gold">
+                    <span class="label">MEJOR SCORE</span>
+                    <span class="value" id="valBestScore">0 / 16</span>
+                </div>
+                <div class="metric-card pulse">
+                    <span class="label">EFICIENCIA</span>
+                    <span class="value" id="valEfficiency">0.0%</span>
+                </div>
+                <div class="metric-card">
+                    <span class="label">MUESTREO (Progress)</span>
+                    <span class="value" id="valProgress">0 / 300</span>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="progressBar"></div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="grid-layout">
+                <div class="chart-container large">
+                    <h3><i class="fas fa-chart-line"></i> Evolución del Score</h3>
+                    <canvas id="chartEvo"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <h3><i class="fas fa-chart-bar"></i> Distribución de Soluciones</h3>
+                    <canvas id="chartHist"></canvas>
+                </div>
+
+                <div class="visualizer-container">
+                    <h3><i class="fas fa-network-wired"></i> Partición Max-Cut (N=16)</h3>
+                    <canvas id="canvasGraph" width="400" height="400"></canvas>
+                    <div class="legend">
+                        <div class="legend-item"><span class="dot group-a"></span> Grupo A (0)</div>
+                        <div class="legend-item"><span class="dot group-b"></span> Grupo B (1)</div>
+                    </div>
+                </div>
+
+                <div class="bits-display-container">
+                    <h3><i class="fas fa-binary"></i> Mejor Configuración</h3>
+                    <div id="bitsDisplay" class="bits-grid">
+                        <!-- Bits will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <footer class="status-bar">
+                <span id="logDisplay"><i class="fas fa-info-circle"></i> Listo para conectar</span>
+            </footer>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
